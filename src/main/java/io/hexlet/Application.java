@@ -2,6 +2,7 @@ package io.hexlet;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 public class Application {
     public static void main(String[] args) throws SQLException {
@@ -18,13 +19,33 @@ public class Application {
                 statement2.executeUpdate(sql2);
             }
 
-            var sql3 = "SELECT * FROM users";
+            var sql3 = "INSERT INTO users (username, phone) VALUES (?, ?)";
+            try (var preparedStatement = conn.prepareStatement(sql3, Statement.RETURN_GENERATED_KEYS)) {
+                preparedStatement.setString(1, "Sarah");
+                preparedStatement.setString(2, "333333333");
+                preparedStatement.addBatch();
+
+                preparedStatement.setString(1, "Joe");
+                preparedStatement.setString(2, "444444444");
+                preparedStatement.addBatch();
+
+                preparedStatement.executeBatch();
+            }
+
+            var sql4 = "SELECT * FROM users";
             try (var statement3 = conn.createStatement()) {
-                var resultSet = statement3.executeQuery(sql3);
+                var resultSet = statement3.executeQuery(sql4);
                 while (resultSet.next()) {
                     System.out.println(resultSet.getString("username"));
                     System.out.println(resultSet.getString("phone"));
                 }
+            }
+
+            var sql5 = "DELETE FROM users (username, phone) WHERE username = ?";
+            try (var preparedStatement = conn.prepareStatement(sql5)) {
+                preparedStatement.setString(1, "Joe");
+                int rowsDeleted = preparedStatement.executeUpdate();
+                System.out.println(rowsDeleted + " user(s) deleted.");
             }
         }
     }
